@@ -81,13 +81,30 @@ namespace Wordle
 
         public static void PrintWord(Word word)
         {
-            for (int i = 0; i < word._letters.Length; i++)
+            for (int i = 0; i < word.Letters.Length; i++)
             {
                 Console.ForegroundColor = word._colours[i];
                 Console.Write(word._letters[i]);
             }
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine();
+        }
+
+        public override string ToString()
+        {
+            return Letters;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is Word word)
+            {
+                return this.Letters == word.Letters;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
