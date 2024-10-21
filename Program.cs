@@ -1,7 +1,5 @@
 ﻿namespace Wordle
 {
-    
-
     public class Wordle
     {
         static int maxGuesses;
@@ -41,10 +39,13 @@
 
         static void Main()
         {
+            // Initialise word dictionary and pick random word
+            Dictionary.InitDictionary();
+
             maxGuesses = 6;
             numGuessesLeft = maxGuesses;
-            targetWord = new Word("Turbo");
             pastGuessWords = new Word[maxGuesses];
+            targetWord = Word.GenerateRandomWord();
 
             while (numGuessesLeft > 0)
             {

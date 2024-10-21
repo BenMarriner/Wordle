@@ -90,6 +90,16 @@ namespace Wordle
             Console.WriteLine();
         }
 
+        public static Word GenerateRandomWord()
+        {
+            if (Dictionary.WordDictionary == null) throw new Exception("ERROR: Could not generate a random word because the word dictionary was not first initialised");
+            if (Dictionary.WordDictionary.Count == 0) throw new Exception("ERROR: The dictionary is empty or has no 5-letter words... Please add some words");
+
+            Random random = new Random();
+            int randIdx = random.Next(0, Dictionary.WordDictionary.Count - 1);
+            return new Word(Dictionary.WordDictionary[randIdx]);
+        }
+
         public override string ToString()
         {
             return Letters;
