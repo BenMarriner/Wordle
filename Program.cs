@@ -2,69 +2,100 @@
 {
     public class Wordle
     {
-        static int maxGuesses;
-        static int numGuessesLeft;
-        static Word targetWord;
-        static Word[] pastGuessWords;
-        static Word currGuessWord;
-        static bool win;
+        private static int maxGuesses = 6;
+        private static int numGuessesLeft;
+        private static Word? targetWord;
+        private static Word[]? pastGuessWords;
+        private static Word? currGuessWord;
+        private static bool win;
         
-        static void PrintGameState(Word[] wordsList)
+        /// <summary>
+        /// Prints the list of words the player has guessed so far
+        /// </summary>
+        private static void PrintGameState()
         {
+            pastGuessWords = pastGuessWords ?? new Word[maxGuesses];
+            
             Console.Clear();
             Console.WriteLine("=== Wordle ===");
             Console.WriteLine("Guessed words:");
-            for (int i = 0; i < wordsList.Length; i++)
+            for (int i = 0; i < pastGuessWords.Length; i++)
             {
-                Word word = wordsList[i];
+                Word word = pastGuessWords[i];
                 if (word != null)
-                    Word.PrintWord(wordsList[i]);
+                    Word.PrintWord(pastGuessWords[i]);
             }
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine();
         }
 
-        static void PrintWinScreen()
+        /// <summary>
+        /// The screen for if the player wins
+        /// </summary>
+        private static void PrintWinScreen()
         {
-            PrintGameState(pastGuessWords);
+            PrintGameState();
             Console.WriteLine("Congratulations! You guessed correctly");
         }
 
-        static void PrintLossScreen()
+        /// <summary>
+        /// The screen for if the player loses
+        /// </summary>
+        private static void PrintLossScreen()
         {
-            PrintGameState(pastGuessWords);
+            PrintGameState();
             Console.WriteLine("Oh no! You couldn't guess the word. Better luck next time!");
             Console.WriteLine("The correct word was " + targetWord);
+        }
+        
+        /// <summary>
+        /// This function handles and validates input from the player
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        private static String ReceiveWordInput(String message = "Please enter a 5 letter word: ") // If no custom message is provided, display the default one
+        {
+            String input;
+            bool wordExists = false;
+            bool correctLength = false;
+
+            do
+            {
+                Console.WriteLine(message);
+                input = Console.ReadLine() ?? String.Empty;
+                input = input.Trim();
+
+                // Validation checks
+                wordExists = Dictionary.WordExists(input);
+                correctLength = input.Length == 5;
+
+                if (!wordExists || !correctLength)
+                    Console.WriteLine(input + " is either not a word or is not 5 letters long. Try a different one");
+            }
+            while (!(wordExists && correctLength));
+
+            return input;
         }
 
         static void Main()
         {
-            // Initialise word dictionary and pick random word
+            // Initialise word dictionary
             Dictionary.InitDictionary();
 
-            maxGuesses = 6;
             numGuessesLeft = maxGuesses;
             pastGuessWords = new Word[maxGuesses];
-            targetWord = Word.GenerateRandomWord();
+            targetWord = new Word(ReceiveWordInput("Please enter the target word for the player guess: "));
 
             while (numGuessesLeft > 0)
             {
-                // Handle user input
-                String? input = "";
-                do
-                {
-                    Console.WriteLine("Please enter a 5 letter word: ");
-                    input = Console.ReadLine();
-                    input = input.Trim();
-                }
-                while (input.Length != 5);
+                PrintGameState();
 
-                currGuessWord = new Word(input);
+                // Handle user input
+                currGuessWord = new Word(ReceiveWordInput());
                 Word.SetWordLetterColours(currGuessWord, targetWord);
 
                 pastGuessWords[maxGuesses - numGuessesLeft] = currGuessWord;
 
-                PrintGameState(pastGuessWords);
 
                 if (currGuessWord.Equals(targetWord))
                 {
@@ -80,5 +111,6 @@
             if (win)    PrintWinScreen();
             else        PrintLossScreen();
         }
+
     }
 }
