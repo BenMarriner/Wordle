@@ -21,7 +21,7 @@
             Console.WriteLine("Guessed words:");
             for (int i = 0; i < pastGuessWords.Length; i++)
             {
-                Word word = pastGuessWords[i];
+                Word? word = pastGuessWords[i];
                 if (word != null)
                     Word.PrintWord(pastGuessWords[i]);
             }
@@ -77,7 +77,7 @@
             return input;
         }
 
-        static void Main()
+        public static void Main()
         {
             // Initialise word dictionary
             Dictionary.InitDictionary();
@@ -97,7 +97,7 @@
                 pastGuessWords[maxGuesses - numGuessesLeft] = currGuessWord;
 
 
-                if (currGuessWord.Equals(targetWord))
+                if (currGuessWord == targetWord)
                 {
                     win = true;
                     break;

@@ -48,7 +48,7 @@ public static class Dictionary
 		catch (FileNotFoundException e)
 		{
 			// Program will be forced to exit since it cannot function without the dictionary
-			Console.WriteLine("FATAL ERROR: Could not find the Dictionary.csv file");
+			Console.WriteLine("FATAL ERROR: Could not find the dictionary.txt file");
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
 			Environment.Exit(e.HResult);

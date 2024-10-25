@@ -1,9 +1,11 @@
+# Used to generate the dictionary the program uses. Filters out words that do not meet the criteria outlined in the task. Outputs a dictionary.txt file.
+
 import os
 import string
 
-def has_duplicate_letters(word):
-    """Check if the word contains duplicate letters."""
-    return len(word) != len(set(word))
+# def has_duplicate_letters(word):
+#     """Check if the word contains duplicate letters."""
+#     return len(word) != len(set(word))
 
 def has_five_letters(word):
     """Check if the word has 5 letters"""
@@ -22,7 +24,8 @@ def filter_words(input_file, output_file):
     with open(input_file, 'r') as infile:
         words = infile.read().splitlines()
 
-    filtered_words = [word for word in words if not has_duplicate_letters(word) and has_five_letters(word) and not contains_non_letter_chars(word)]
+    #filtered_words = [word for word in words if not has_duplicate_letters(word) and has_five_letters(word) and not contains_non_letter_chars(word)]
+    filtered_words = [word for word in words if has_five_letters(word) and not contains_non_letter_chars(word)]
 
     with open(output_file, 'w') as outfile:
         for word in filtered_words:
