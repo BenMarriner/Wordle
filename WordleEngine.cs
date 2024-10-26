@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
 using System.Reflection.Metadata;
@@ -14,6 +15,10 @@ using System.Xml;
 
 namespace Wordle
 {
+    /// <summary>
+    /// This class stores information regarding a single letter.
+    /// Holds the symbol and the colour, which defaults to white
+    /// </summary>
     public class Letter
     {
         private char _character;
@@ -98,72 +103,65 @@ namespace Wordle
         {
         }
 
-        // Evaluates the guess word against the target word and sets the colours of the letters
-        // Green = Correct letter in correct position
-        // Yellow = Letter is found in the word but not in the correct location
-        // Red = Letter is not found in the word
+        /// <summary>
+        /// Evaluates the guess word against the target word and sets the colours of the letters
+        /// Green = Correct letter in correct position
+        /// Yellow = Letter is found in the word but not in the correct location
+        /// Red = Letter is not found in the word
+        /// </summary>
+        /// <param name="guessWord"></param>
+        /// <param name="targetWord"></param>
         public static void SetWordLetterColours(Word guessWord, Word targetWord)
         {
-            //ConsoleColor[] evaluatedColours = new ConsoleColor[5];
+            if (guessWord == null || targetWord == null) return;
 
-            //for (int i = 0; i < targetWord.Letters.Length; i++)
-            //{
-            //    if (Char.Equals(guessWord.Letters[i], targetWord.Letters[i]))
-            //        evaluatedColours[i] = ConsoleColor.Green;
-            //    else if (targetWord.Letters.Contains(guessWord.Letters[i]))
-            //        evaluatedColours[i] = ConsoleColor.Yellow;
-            //    else
-            //        evaluatedColours[i] = ConsoleColor.Red;
-            //}
+            // Here, we are constructing a table made of tuples.
+            // Each tuple contains the following:
+            // (Item1: Target Letters, Item2: Guess Letters, Item 3: Whether or not the letter has been discovered (true or false), Item 4: Letter colour)
+            // Each tuple starts off with the letters of the guess and target words, a false value (the letter starts as undiscovered) and the colour red
+            // (so that later on, if the letter is not found, it stays red).
+            var targetLetters = targetWord.Letters;
+            var guessLetters = guessWord.Letters;
+            var discoveredLetters = Enumerable.Repeat(false, targetWord.Letters.Length).ToArray();
+            var letterColours = Enumerable.Repeat(ConsoleColor.Red, targetWord.Letters.Length).ToArray();
+            var evalTable = ZipExtensions.ZipFour(targetLetters, guessLetters, discoveredLetters, letterColours).ToArray();
 
-            //guessWord.Colours = evaluatedColours;
-
-            bool[] discoveredTargetLetters = [false, false, false, false, false];
-            //var zip = targetWord.Letters.Zip(guessWord.Letters, new bool[] { false, false, false, false, false });
-
-            //foreach (var letterTuple in zip)
-            //{
-
-            //}
-
-
-
-            // Discover correct letters first
-            for (int i = 0; i < guessWord.Letters.Length; i++)
+            // Find all letters that match, mark them as discovered and set the guessed letter's colour to green
+            evalTable = evalTable.Select(tuple => tuple.Target == tuple.Guess ? (tuple.Target, tuple.Guess, true, ConsoleColor.Green) : tuple).ToArray();
+            
+            // Find all letters from the guess word that exist in the target word but are not in the correct position
+            for (int i = 0; i < evalTable.Length; i++)
             {
-                var guessLetter = guessWord.Letters[i];
-                var targetLetter = targetWord.Letters[i];
-                if (guessLetter == targetLetter)
+                // Ensure that the letter we are about to check hasn't already been discovered (and therefore marked green)
+                // We are ensuring we only check undiscovered letters so that green letters don't get marked yellow.
+                // Also, we only want to mark as many of a particular letter in a guessed word as there are occurrences of that
+                // same letter in the target word. For instance, if the target word is NESTS and the player enters EAGLE,
+                // we only want the program to highlight the first E from EAGLE in yellow since NESTS only contains one E.
+                if (evalTable[i].Discovered) continue;
+
+                var guessLetter = evalTable[i].Guess;
+
+                for (int j = 0; j < evalTable.Length; j++)
                 {
-                    discoveredTargetLetters[i] = true;
-                    guessWord.Letters[i].Colour = ConsoleColor.Green;
-                }
-            }
-
-            for (int i = 0; i < guessWord.Letters.Length; i++)
-            {
-                var guessLetter = guessWord.Letters[i];
-                var targetLetter = targetWord.Letters[i];
-
-                if (guessLetter != targetLetter)
-                {
-                    // Set colour to red in case the letter is nowhere to be found
-                    guessWord.Letters[i].Colour = ConsoleColor.Red;
-
-                    for (int j = 0; j < targetWord.Letters.Length; j++)
+                    if (guessLetter == evalTable[j].Target && !evalTable[j].Discovered)
                     {
-                        if (guessLetter == targetWord.Letters[j] && !discoveredTargetLetters[j])
-                        {
-                            discoveredTargetLetters[j] = true;
-                            guessWord.Letters[i].Colour = ConsoleColor.Yellow;
-                            break;
-                        }
+                        // Change the guessed letter to yellow
+                        evalTable[i] = (evalTable[i].Target, evalTable[i].Guess, evalTable[i].Discovered, ConsoleColor.Yellow);
+                        // Mark the target letter as discovered
+                        evalTable[j] = (evalTable[j].Target, evalTable[j].Guess, true, evalTable[j].Colour);
                     }
                 }
             }
-        }
-            
 
+            // Set the actual colour of each letter to its respective colour from the evaluation tuple
+            foreach (var (Target, Guess, Discovered, Colour) in evalTable)
+                Guess.Colour = Colour;
+        }
+
+        /// <summary>
+        /// Prints the word with each letter in its respective colour
+        /// </summary>
+        /// <param name="word"></param>
         public static void PrintWord(Word word)
         {
             foreach (var letter in word.Letters)
