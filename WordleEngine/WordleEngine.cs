@@ -193,7 +193,7 @@ namespace Wordle
         }
 
         public static implicit operator String(Word? word) { return (word is not null) ? word.ToString() : String.Empty; }
-        public static implicit operator Word(String? inString) { return (inString is not null) ? inString : String.Empty; }
+        public static implicit operator Word(String? inString) { return (inString is not null) ? new Word(inString) : new Word(""); }
 
         public static bool operator ==(Word? word1, Word? word2)
         {

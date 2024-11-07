@@ -11,6 +11,7 @@ namespace Wordle
 	/// </summary>
 	public static class Dictionary
 	{
+		private static bool initialised = false;
 		private static List<String>? _wordDictionary;
 		public static List<String> WordDictionary
 		{ 
@@ -26,35 +27,27 @@ namespace Wordle
 		/// </summary>
 		public static void InitDictionary()
 		{
-			try
-			{
-				String filepath = Directory.GetCurrentDirectory() + "/dictionary.txt";
-				if (!File.Exists(filepath)) throw new FileNotFoundException();
+			if (initialised) return;
 
-				using (TextFieldParser reader = new TextFieldParser(filepath))
-				{
-					while (!reader.EndOfData)
-					{
-						string? currLine = reader.ReadLine();
-						if (currLine != null)
-						{
-							// Only allow 5 letter words
-							if (currLine.Length == 5)
-							{
-								WordDictionary.Add(currLine.ToUpper());
-							}
-						}
-					}
-				}
-			}
-			catch (FileNotFoundException e)
-			{
-				// Program will be forced to exit since it cannot function without the dictionary
-				Console.WriteLine("FATAL ERROR: Could not find the dictionary.txt file");
-				Console.WriteLine("Press any key to exit...");
-				Console.ReadKey();
-				Environment.Exit(e.HResult);
-			}
+            String filepath = Directory.GetCurrentDirectory() + "/dictionary.txt";
+            if (!File.Exists(filepath)) throw new DictionaryNotFoundException();
+
+            using (TextFieldParser reader = new TextFieldParser(filepath))
+            {
+                while (!reader.EndOfData)
+                {
+                    string? currLine = reader.ReadLine();
+                    if (currLine != null)
+                    {
+                        // Only allow 5 letter words
+                        if (currLine.Length == 5)
+                        {
+                            WordDictionary.Add(currLine.ToUpper());
+                        }
+                    }
+                }
+            }
+            initialised = true;
 		}
 	
 
