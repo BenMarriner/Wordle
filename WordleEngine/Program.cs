@@ -1,6 +1,6 @@
 ﻿namespace Wordle
 {
-    public class Wordle
+    public class WordleEngine
     {
         private static int maxGuesses = 6;
         private static int numGuessesLeft;
