@@ -1,14 +1,16 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace Wordle
 {
     public class WordleEngine
     {
         private const int maxGuesses = 6;
-        private Word? targetWord;
+        private Word targetWord = "";
+        private Word currGuessWord = "";
         private Word[]? pastGuessWords;
-        private Word? currGuessWord;
-        private bool win;
+        private bool gameFinished = false;
+        private bool win = false;
 
         public int MaxGuesses { get { return maxGuesses; } }
         public Word[]? PastGuessWords
@@ -21,19 +23,34 @@ namespace Wordle
         }
         public int NumGuessesLeft
         {
-            get 
-            { 
-                return MaxGuesses - (PastGuessWords != null ? PastGuessWords.Count(word => word != null) : 0);
+            get
+            {
+                if (PastGuessWords is null) return MaxGuesses;
+                return PastGuessWords.Count(word => word is null);
             }
         }
+        public Word TargetWord
+        {
+            get
+            {
+                return targetWord;
+            }
+            private set
+            {
+                targetWord = value;
+            }
+        }
+        public Word CurrGuessWord { get { return currGuessWord; } private set { currGuessWord = value; } }
+        
+        public bool GameFinished { get { return gameFinished; } private set { gameFinished = value; } }
         public bool Win { get { return win; } private set { win = value; } }
+
 
         public WordleEngine(String inputTargetWord)
         {
             Dictionary.InitDictionary();
             targetWord = inputTargetWord;
             pastGuessWords = new Word[maxGuesses];
-            win = false;
         }
 
         /// <summary>
@@ -122,19 +139,29 @@ namespace Wordle
 
         public bool AddGuessedWord(String newWord)
         {
-            if (!ValidateStringInput(newWord)) return false;
+            if (!ValidateStringInput(newWord) || TargetWord is null || PastGuessWords is null) return false;
 
-            pastGuessWords = pastGuessWords ?? new Word[maxGuesses];
-            Word newGuessedWord = newWord;
-            Word.SetWordLetterColours(newGuessedWord, targetWord ?? "");
-            pastGuessWords[maxGuesses - NumGuessesLeft] = newGuessedWord;
+            CurrGuessWord = newWord;
+            Word.SetWordLetterColours(CurrGuessWord, TargetWord);
+            PastGuessWords[maxGuesses - NumGuessesLeft] = CurrGuessWord;
+
+            Update();
 
             return true;
         }
 
+        /// <summary>
+        /// The engine update function checks to see if the most recent word guessed is the correct word.
+        /// If it is, the engine's GameFinished and Win flags will be set so that the game can terminate.
+        /// If the word is not correct and there are no more guesses left, the GameFinished flag will be
+        /// set but not the Win flag.
+        /// </summary>
         private void Update()
         {
-            
+            if (targetWord is null) return;
+
+            GameFinished = NumGuessesLeft == 0 || CurrGuessWord == TargetWord;
+            Win = CurrGuessWord == TargetWord;
         }
 
         //public static void Main()

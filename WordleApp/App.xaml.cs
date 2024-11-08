@@ -10,8 +10,12 @@ namespace WordleApp
     /// </summary>
     public partial class App : Application
     {
-        public static WordleEngine? engine;
+        private static WordleEngine? engine;
+        public static Word currGuessWord = "";
+        public static Word targetWord = "";
         public static int numGuessesLeft;
+        public static bool gameFinished;
+        public static bool win;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -20,13 +24,30 @@ namespace WordleApp
             try
             {
                 engine = new("NESTS");
-                numGuessesLeft = engine.NumGuessesLeft;
+                AppUpdate();
             }
             catch (DictionaryNotFoundException ex)
             {
                 MessageBox.Show("FATAL ERROR: Could not find the dictionary.txt file. Please ensure that this file exists in the root directory of the game. Wordle will now close...");
                 App.Current.Shutdown(ex.HResult);
             }
+        }
+
+        public static void AppUpdate()
+        {
+            if (engine is null) return;
+
+            currGuessWord = engine.CurrGuessWord;
+            targetWord = engine.TargetWord;
+            numGuessesLeft = engine.NumGuessesLeft;
+            gameFinished = engine.GameFinished;
+            win = engine.Win;
+        }
+
+        public static bool AddGuessedWord(String word)
+        {
+            if (engine is null) return false;
+            return engine.AddGuessedWord(word);
         }
     }
 }

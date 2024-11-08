@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,7 +21,7 @@ namespace WordleApp
     {
         private TextBox[] textBoxes;
         private TextBlock[] guessedWordLabels;
-        
+
         public MainWindow()
         {
             InitializeComponent();
@@ -53,20 +55,17 @@ namespace WordleApp
         /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            // This is here to satisfy .NET's dereferencing possible null warning
-            if (App.engine is null) return;
-
             // Retrieve and validate input from the textboxes
-            String guessInput = GetTextBoxInput();
-            if (guessInput == "") return;
+            String newGuessWord = GetTextBoxInput();
+            if (newGuessWord == "") return;
 
             // Add the latest guess word. Throw exception if not found in the dictionary
             try
             {
-                if (!App.engine.AddGuessedWord(guessInput))
-                    throw new InvalidWordException();
-                else
+                if (App.AddGuessedWord(newGuessWord))
                     UIUpdate();
+                else
+                    throw new InvalidWordException();
             }
             catch (InvalidWordException)
             {
@@ -138,13 +137,42 @@ namespace WordleApp
 
         private void UIUpdate()
         {
+            App.AppUpdate();
+
+            // Adds the current guess word to the next available guessed word text block
+            AddToGuessedWordsList(App.currGuessWord);
+            
             lblGuessesLeft.Content = $"Guesses Remaining: {App.numGuessesLeft}";
             foreach (TextBox textBox in textBoxes)
                 textBox.Clear();
 
-            for (int i = 0; i < App.engine.PastGuessWords.Length; i++)
+            // Once the game finishes, we will disable all input from the window and display
+            // a win or a loss message.
+            if (App.gameFinished)
             {
-                guessedWordLabels[i].Text = App.engine.PastGuessWords[i];
+                foreach (var textbox in textBoxes)
+                {
+                    textbox.IsEnabled = false;
+                    btn_Submit.IsEnabled = false;
+                }
+
+                if (App.win)
+                {
+                    lbl_Outcome.Content = "Congratulations! You guessed correctly";
+                }
+                else
+                {
+                    lbl_Outcome.Content = $"Oh no! You couldn't guess the word. The correct word was {App.targetWord}. Better luck next time!";
+                }
+            }
+        }
+
+        private void AddToGuessedWordsList(Word word)
+        {
+            var textblock = guessedWordLabels.First(label => label.Text == "");
+            if (textblock is not null)
+            {
+                textblock.Text = word;
             }
         }
     }
