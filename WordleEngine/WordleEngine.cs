@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
@@ -22,18 +24,18 @@ namespace Wordle
     public class Letter
     {
         private char _character;
-        private ConsoleColor _colour = ConsoleColor.White;
+        private Color _colour = Color.White;
 
         // Letter symbol
         public char Character { get { return _character; } set { _character = char.ToUpper(value); } }
         // Letter colour when printed in the terminal
-        public ConsoleColor Colour { get { return _colour; } set { _colour = value; } }
+        public Color Colour { get { return _colour; } set { _colour = value; } }
 
-        public Letter(char inLetter) : this(inLetter, ConsoleColor.White)
+        public Letter(char inLetter) : this(inLetter, Color.White)
         {
         }
 
-        public Letter(char inLetter, ConsoleColor inColour)
+        public Letter(char inLetter, Color inColour)
         {
             Character = inLetter;
             Colour = inColour;
@@ -45,6 +47,7 @@ namespace Wordle
         }
 
         public static implicit operator Letter(char inLetter) { return new Letter(inLetter); }
+        public static implicit operator char(Letter inLetter) { return inLetter.Character; }
         public static bool operator ==(Letter? left, Letter? right)
         {
             if (ReferenceEquals(left, right)) return true;
@@ -73,7 +76,7 @@ namespace Wordle
     /// It also contains helper functions for printing the words to the console as well as
     /// checking a guess word against a target word to determine the guess word's colours.
     /// </summary>
-    public class Word
+    public class Word : IEnumerable<Letter>
     {
         private Letter[]? _letters;
 
@@ -88,7 +91,7 @@ namespace Wordle
             }
         }
 
-        public Word(String inLetters, ConsoleColor[] inColours)
+        public Word(String inLetters, Color[] inColours)
         {
             int i = 0;
             foreach (var letter in inLetters)
@@ -99,7 +102,7 @@ namespace Wordle
             }
         }
 
-        public Word(String inLetters) : this(inLetters, [ConsoleColor.White, ConsoleColor.White, ConsoleColor.White, ConsoleColor.White, ConsoleColor.White])
+        public Word(String inLetters) : this(inLetters, [Color.White, Color.White, Color.White, Color.White, Color.White])
         {
         }
 
@@ -123,11 +126,11 @@ namespace Wordle
             var targetLetters = targetWord.Letters;
             var guessLetters = guessWord.Letters;
             var discoveredLetters = Enumerable.Repeat(false, targetWord.Letters.Length).ToArray();
-            var letterColours = Enumerable.Repeat(ConsoleColor.Red, targetWord.Letters.Length).ToArray();
+            var letterColours = Enumerable.Repeat(Color.Red, targetWord.Letters.Length).ToArray();
             var evalTable = ZipExtensions.ZipFour(targetLetters, guessLetters, discoveredLetters, letterColours).ToArray();
 
             // Find all letters that match, mark them as discovered and set the guessed letter's colour to green
-            evalTable = evalTable.Select(tuple => tuple.Target == tuple.Guess ? (tuple.Target, tuple.Guess, true, ConsoleColor.Green) : tuple).ToArray();
+            evalTable = evalTable.Select(tuple => tuple.Target == tuple.Guess ? (tuple.Target, tuple.Guess, true, Color.Green) : tuple).ToArray();
             
             // Find all letters from the guess word that exist in the target word but are not in the correct position
             for (int i = 0; i < evalTable.Length; i++)
@@ -146,7 +149,7 @@ namespace Wordle
                     if (guessLetter == evalTable[j].Target && !evalTable[j].Discovered)
                     {
                         // Change the guessed letter to yellow
-                        evalTable[i] = (evalTable[i].Target, evalTable[i].Guess, evalTable[i].Discovered, ConsoleColor.Yellow);
+                        evalTable[i] = (evalTable[i].Target, evalTable[i].Guess, evalTable[i].Discovered, Color.Yellow);
                         // Mark the target letter as discovered
                         evalTable[j] = (evalTable[j].Target, evalTable[j].Guess, true, evalTable[j].Colour);
                     }
@@ -159,31 +162,15 @@ namespace Wordle
         }
 
         /// <summary>
-        /// Prints the word with each letter in its respective colour
-        /// </summary>
-        /// <param name="word"></param>
-        public static void PrintWord(Word word)
-        {
-            foreach (var letter in word.Letters)
-            {
-                Console.ForegroundColor = letter.Colour;
-                Console.Write(letter);
-            }
-
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine();
-        }
-
-        /// <summary>
         /// Gets a random word from the dictionary and creates a word out of it
         /// </summary>
         /// <returns></returns>
-        //public static Word GenerateRandomWord()
-        //{
-        //    Random random = new Random();
-        //    int randIdx = random.Next(0, Dictionary.WordDictionary.Count - 1);
-        //    return new Word(Dictionary.WordDictionary[randIdx]);
-        //}
+        public static Word GenerateRandomWord()
+        {
+            Random random = new Random();
+            int randIdx = random.Next(0, Dictionary.WordDictionary.Count - 1);
+            return new Word(Dictionary.WordDictionary[randIdx]);
+        }
 
         public override string ToString()
         {
@@ -218,5 +205,14 @@ namespace Wordle
             return HashCode.Combine(Letters);
         }
 
+        IEnumerator<Letter> IEnumerable<Letter>.GetEnumerator()
+        {
+            return ((IEnumerable<Letter>)Letters).GetEnumerator();
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return Letters.GetEnumerator();
+        }
     }
 }

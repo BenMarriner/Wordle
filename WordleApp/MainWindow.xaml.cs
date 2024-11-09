@@ -1,6 +1,10 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Drawing;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.AccessControl;
+using System.Security.Authentication;
 using System.Text;
+using System.Transactions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -19,20 +23,11 @@ namespace WordleApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private TextBox[] textBoxes;
         private TextBlock[] guessedWordLabels;
 
         public MainWindow()
         {
             InitializeComponent();
-            textBoxes = 
-            [
-                txtbox_GuessedLetter1,
-                txtbox_GuessedLetter2,
-                txtbox_GuessedLetter3,
-                txtbox_GuessedLetter4,
-                txtbox_GuessedLetter5
-            ];
 
             guessedWordLabels =
             [
@@ -43,6 +38,14 @@ namespace WordleApp
                 lbl_GuessedWordBox5,
                 lbl_GuessedWordBox6
             ];
+
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Focus on the first textbox to begin typing
+            txtBoxInput.Focus();
         }
 
         /// <summary>
@@ -55,27 +58,37 @@ namespace WordleApp
         /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            SubmitGuessWord();
+        }
+
+        private void SubmitGuessWord()
+        {
             // Retrieve and validate input from the textboxes
             String newGuessWord = GetTextBoxInput();
             if (newGuessWord == "") return;
 
-            // Add the latest guess word. Throw exception if not found in the dictionary
+            // Add the latest guess word. Warn the player if it is not found in the dictionary
             try
             {
                 if (App.AddGuessedWord(newGuessWord))
-                    UIUpdate();
+                {
+                    App.AppUpdate();
+                    txtBoxInput.Clear();
+                }
                 else
+                {
                     throw new InvalidWordException();
+                }
             }
             catch (InvalidWordException)
             {
                 MessageBox.Show("This is not a valid word. Please choose a different one");
             }
+            txtBoxInput.Focus();
         }
 
         /// <summary>
-        /// This function stops any non-letter characters from being entered into a textbox
-        /// The function name is attached to the textboxes' PreviewTextInput attribute in the XAML code.
+        /// Keeps all textbox input to letters only
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -85,41 +98,13 @@ namespace WordleApp
             {
                 e.Handled = true;
             }
-            else
-            {
-                var textbox = sender as TextBox;
-                if (textbox is not null)
-                {
-                    textbox.Text = e.Text.ToUpper();
-                    textbox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-                }
-                e.Handled = true;
-            }
-        }
-
-        private void BackspaceTraversal(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Back)
-            {
-                var textbox = sender as TextBox;
-                if (textbox is not null)
-                {
-                    textbox.Clear();
-                    textbox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Previous));
-                }
-            }
         }
 
         private String GetTextBoxInput()
         {
-            String textboxGuess = "";
+            String textboxGuess = txtBoxInput.Text;
             try
             {
-                foreach (TextBox textBox in textBoxes)
-                {
-                    textboxGuess += (textBox.Text);
-                }
-
                 if (textboxGuess.Length != 5) throw new ArgumentException();
                 
                 return textboxGuess;
@@ -135,44 +120,53 @@ namespace WordleApp
             return "";
         }
 
-        private void UIUpdate()
+        public void UIUpdate()
         {
-            App.AppUpdate();
-
             // Adds the current guess word to the next available guessed word text block
-            AddToGuessedWordsList(App.currGuessWord);
+            // CurrGuessWord will be null at the beginning when no words yet been entered
+            if (App.CurrGuessWord is not null && App.CurrGuessWord != "")
+                AddToGuessedWordsList(App.CurrGuessWord);
             
-            lblGuessesLeft.Content = $"Guesses Remaining: {App.numGuessesLeft}";
-            foreach (TextBox textBox in textBoxes)
-                textBox.Clear();
+            lblGuessesLeft.Content = $"Guesses Remaining: {App.NumGuessesLeft}";
 
             // Once the game finishes, we will disable all input from the window and display
             // a win or a loss message.
-            if (App.gameFinished)
+            if (App.GameFinished)
             {
-                foreach (var textbox in textBoxes)
-                {
-                    textbox.IsEnabled = false;
-                    btn_Submit.IsEnabled = false;
-                }
+                txtBoxInput.IsEnabled = false;
+                btn_Submit.IsEnabled = false;
 
-                if (App.win)
+                if (App.Win)
                 {
                     lbl_Outcome.Content = "Congratulations! You guessed correctly";
                 }
                 else
                 {
-                    lbl_Outcome.Content = $"Oh no! You couldn't guess the word. The correct word was {App.targetWord}. Better luck next time!";
+                    lbl_Outcome.Content = $"Oh no! You couldn't guess the word. The correct word was {App.TargetWord}. Better luck next time!";
                 }
             }
         }
 
+        /// <summary>
+        /// Adds a guess word to the next available empty textblock
+        /// </summary>
+        /// <param name="word"></param>
         private void AddToGuessedWordsList(Word word)
         {
             var textblock = guessedWordLabels.First(label => label.Text == "");
             if (textblock is not null)
             {
-                textblock.Text = word;
+                // Write each letter in the textblock with its corresponding colour
+                foreach (Letter letter in word)
+                    textblock.Inlines.Add(new Run(letter.ToString()) { Foreground = ColourConverter.GetColour(letter.Colour) });
+            }
+        }
+
+        private void TextboxKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                SubmitGuessWord();
             }
         }
     }
