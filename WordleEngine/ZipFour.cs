@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Wordle
+namespace WordleEngine
 {
     /// <summary>
     /// This class has been created to help with the algorithm in SetWordLetterColours().

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using System.Xml;
 
 
-namespace Wordle
+namespace WordleEngine
 {
     /// <summary>
     /// This class stores information regarding a single letter.

@@ -1,7 +1,7 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
-using Wordle;
+using WordleEngine;
 
 namespace WordleApp
 {
@@ -10,7 +10,7 @@ namespace WordleApp
     /// </summary>
     public partial class App : Application
     {
-        private static WordleEngine? engine;
+        private static WordleEngine.Engine? engine;
         private static MainWindow? mainWindow;
         public static Word CurrGuessWord = "";
         public static Word TargetWord = "";
@@ -34,16 +34,18 @@ namespace WordleApp
                 String newTargetWord = "";
                 bool isValidWord = false;
                 var inputWindow = new TargetWordInputWindow();
-                inputWindow.Closed += InputWindow_Closed; // Bind a function to this delegate in case the player closes the input window via the X button.
+                // Bind a function to this delegate in case the player closes the input window via the X button.
+                inputWindow.Closed += InputWindow_Closed;
 
                 // If we have a commandline argument, set newTargetWord to that
                 // and validate to see if we can skip the validation loop that follows
                 if (Environment.GetCommandLineArgs().Length > 1)
                 {
                     newTargetWord = Environment.GetCommandLineArgs()[1];
-                    isValidWord = WordleEngine.ValidateStringInput(newTargetWord);
+                    isValidWord = WordleEngine.Engine.ValidateStringInput(newTargetWord);
                 }
 
+                // Continue prompting the player until a valid word is typed
                 while (!isValidWord && !quitRequestedDuringTargetWordInput)
                 {
                     if (String.IsNullOrEmpty(newTargetWord))
@@ -54,7 +56,7 @@ namespace WordleApp
                     inputWindow.ShowDialog();
 
                     newTargetWord = inputWindow.TargetWordInput;
-                    isValidWord = WordleEngine.ValidateStringInput(newTargetWord);
+                    isValidWord = WordleEngine.Engine.ValidateStringInput(newTargetWord);
                 }
 
                 // If the player has clicked the input window's X button, close Wordle
@@ -90,6 +92,9 @@ namespace WordleApp
             quitRequestedDuringTargetWordInput = true;
         }
 
+        /// <summary>
+        /// The global Update function for Wordle. It updates the engine and then the frontend UI.
+        /// </summary>
         public static void AppUpdate()
         {
             if (engine is null) return;
@@ -109,6 +114,11 @@ namespace WordleApp
                 mainWindow.UIUpdate();
         }
 
+        /// <summary>
+        /// Registers new guess words with the engine. Must be called before AppUpdate()
+        /// </summary>
+        /// <param name="word"></param>
+        /// <returns></returns>
         public static bool AddGuessedWord(String word)
         {
             if (engine is null) return false;

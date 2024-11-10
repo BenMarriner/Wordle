@@ -14,7 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using Wordle;
+using WordleEngine;
 
 namespace WordleApp
 {
@@ -42,25 +42,9 @@ namespace WordleApp
             this.Loaded += MainWindow_Loaded;
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            // Focus on the first textbox to begin typing
-            txtBoxInput.Focus();
-        }
-
         /// <summary>
-        /// When the submit button is clicked, the application will assemble the word from the letters in the textboxes
-        /// and pass it to the engine for validation. From here, depending on if the word comes back as validated,
-        /// The UI update function will be called. If the player's input is not valid, a message box will appear
-        /// where the user will be asked to type something else.
+        /// Submit the next guess word for validation and app update if valid
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            SubmitGuessWord();
-        }
-
         private void SubmitGuessWord()
         {
             // Retrieve and validate input from the textboxes
@@ -87,26 +71,13 @@ namespace WordleApp
             txtBoxInput.Focus();
         }
 
-        /// <summary>
-        /// Keeps all textbox input to letters only
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ValidateTextBoxInput(object sender, TextCompositionEventArgs e)
-        {
-            if (!e.Text.All(char.IsLetter))
-            {
-                e.Handled = true;
-            }
-        }
-
         private String GetTextBoxInput()
         {
             String textboxGuess = txtBoxInput.Text;
             try
             {
                 if (textboxGuess.Length != 5) throw new ArgumentException();
-                
+
                 return textboxGuess;
             }
             catch (ArgumentException)
@@ -120,6 +91,9 @@ namespace WordleApp
             return "";
         }
 
+        /// <summary>
+        /// Updates the MainWindow UI to reflect the current state of the game
+        /// </summary>
         public void UIUpdate()
         {
             // Adds the current guess word to the next available guessed word text block
@@ -162,12 +136,43 @@ namespace WordleApp
             }
         }
 
+        /// <summary>
+        /// When the submit button is clicked, the application will get the text from the textbox
+        /// and pass it to the engine for validation. From here, depending on if the word comes back as validated,
+        /// The WordleApp's update function is called. If the player's input is not valid, a message box will appear
+        /// that will ask the user to type something else.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            SubmitGuessWord();
+        }
+
+        /// <summary>
+        /// Keeps all textbox input to letters only
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ValidateTextBoxInput(object sender, TextCompositionEventArgs e)
+        {
+            if (!e.Text.All(char.IsLetter))
+            {
+                e.Handled = true;
+            }
+        }
+
         private void TextboxKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
                 SubmitGuessWord();
             }
+        }
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Focus on the first textbox to quickly begin typing the next guess word
+            txtBoxInput.Focus();
         }
     }
 }

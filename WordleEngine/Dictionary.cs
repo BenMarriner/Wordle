@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Runtime.CompilerServices;
 
-namespace Wordle
+namespace WordleEngine
 {
 	/// <summary>
 	/// This class handles the loading of the dictionary.txt file into memory.

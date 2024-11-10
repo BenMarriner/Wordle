@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Wordle
+namespace WordleEngine
 {
     public class InvalidWordException : Exception
     {

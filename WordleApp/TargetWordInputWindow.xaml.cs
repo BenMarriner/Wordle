@@ -16,6 +16,7 @@ namespace WordleApp
 {
     /// <summary>
     /// Interaction logic for TargetWordInputWindow.xaml
+    /// Responsible for prompting the player to input target words
     /// </summary>
     public partial class TargetWordInputWindow : Window
     {

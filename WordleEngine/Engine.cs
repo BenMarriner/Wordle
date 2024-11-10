@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace Wordle
+namespace WordleEngine
 {
-    public class WordleEngine
+    /// <summary>
+    /// The main class for the Wordle Engine and is used by frontends to interact with it.
+    /// </summary>
+    public class Engine
     {
         private const int maxGuesses = 6;
         private Word targetWord = "";
@@ -46,7 +49,7 @@ namespace Wordle
         public bool Win { get { return win; } private set { win = value; } }
 
 
-        public WordleEngine(String inputTargetWord)
+        public Engine(String inputTargetWord)
         {
             Dictionary.InitDictionary();
             SetTargetWord(inputTargetWord);
@@ -68,6 +71,11 @@ namespace Wordle
             else return false;
         }
 
+        /// <summary>
+        /// Registers a guess word with the engine. Must be called before EngineUpdate()
+        /// </summary>
+        /// <param name="newWord"></param>
+        /// <returns></returns>
         public bool AddGuessedWord(String newWord)
         {
             if (!ValidateStringInput(newWord) || TargetWord is null || PastGuessWords is null) return false;
@@ -79,6 +87,11 @@ namespace Wordle
             return true;
         }
 
+        /// <summary>
+        /// Sets the target word
+        /// </summary>
+        /// <param name="newWord"></param>
+        /// <returns></returns>
         public bool SetTargetWord(String newWord)
         {
             if (ValidateStringInput(newWord))
