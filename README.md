@@ -1,5 +1,5 @@
 # Wordle
- A CLI program that plays Wordle. Requires .NET 8.0
+A WPF program that plays Wordle. Requires .NET 8.0
  
 Below, I have listed some assumptions that were made based on the requirements of the task:
 1. The original unfiltered dictionary file was obtained from http://gwicks.net/dictionaries.htm as per the task's requirements
